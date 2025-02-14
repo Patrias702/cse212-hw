@@ -1,13 +1,120 @@
+using System;
+using System.Collections.Generic;
+
+public class Node
+{
+    public int Value;
+    public Node Left;
+    public Node Right;
+
+    public Node(int value)
+    {
+        Value = value;
+        Left = null;
+        Right = null;
+    }
+
+    // Problem 1: Insert Unique Values Only
+    public void Insert(int value)
+    {
+        if (value < this.Value)
+        {
+            if (Left == null)
+                Left = new Node(value);
+            else
+                Left.Insert(value);
+        }
+        else if (value > this.Value) // Prevent duplicates by checking if value is equal
+        {
+            if (Right == null)
+                Right = new Node(value);
+            else
+                Right.Insert(value);
+        }
+    }
+
+    // Problem 2: Contains Function
+    public bool Contains(int value)
+    {
+        if (value == this.Value)
+            return true;
+        else if (value < this.Value && Left != null)
+            return Left.Contains(value);
+        else if (value > this.Value && Right != null)
+            return Right.Contains(value);
+
+        return false;
+    }
+
+    // Problem 4: Get Tree Height
+    public int GetHeight()
+    {
+        int leftHeight = Left != null ? Left.GetHeight() : 0;
+        int rightHeight = Right != null ? Right.GetHeight() : 0;
+
+        return 1 + Math.Max(leftHeight, rightHeight);
+    }
+}
+
+public class BinarySearchTree
+{
+    private Node Root;
+
+    public BinarySearchTree()
+    {
+        Root = null;
+    }
+
+    public void Insert(int value)
+    {
+        if (Root == null)
+            Root = new Node(value);
+        else
+            Root.Insert(value);
+    }
+
+    public bool Contains(int value)
+    {
+        return Root != null && Root.Contains(value);
+    }
+
+    // Problem 3: Traverse Backwards
+    public void TraverseBackward(Action<int> action)
+    {
+        TraverseBackwardHelper(Root, action);
+    }
+
+    private void TraverseBackwardHelper(Node node, Action<int> action)
+    {
+        if (node == null)
+            return;
+
+        if (node.Right != null)
+            TraverseBackwardHelper(node.Right, action);
+
+        action(node.Value);
+
+        if (node.Left != null)
+            TraverseBackwardHelper(node.Left, action);
+    }
+
+    public IEnumerable<int> Reversed()
+    {
+        var values = new List<int>();
+        TraverseBackward(values.Add);
+        return values;
+    }
+
+    public int GetHeight()
+    {
+        return Root != null ? Root.GetHeight() : 0;
+    }
+}
+
 public static class Trees
 {
     /// <summary>
-    /// Given a sorted list (sorted_list), create a balanced BST.  If the values in the
-    /// sortedNumbers were inserted in order from left to right into the BST, then it
-    /// would resemble a linked list (unbalanced). To get a balanced BST, the
-    /// InsertMiddle function is called to find the middle item in the list to add
-    /// first to the BST. The InsertMiddle function takes the whole list but also takes
-    /// a range (first to last) to consider.  For the first call, the full range of 0 to
-    /// Length-1 used.
+    /// Given a sorted list (sorted_list), create a balanced BST.
     /// </summary>
     public static BinarySearchTree CreateTreeFromSortedList(int[] sortedNumbers)
     {
@@ -17,37 +124,57 @@ public static class Trees
     }
 
     /// <summary>
-    /// This function will attempt to insert the item in the middle of 'sortedNumbers' into
-    /// the 'bst' tree. The middle is determined by using indices represented by 'first' and
-    /// 'last'.
-    /// For example, if the function was called on:
-    ///
-    /// sortedNumbers = new[]{10, 20, 30, 40, 50, 60};
-    /// first = 0;
-    /// last = 5;
-    /// 
-    /// then the value 30 (index 2 which is the middle) would be added 
-    /// to the 'bst' (the insert function in the <see cref="BinarySearchTree"/> can be used
-    /// to do this).   
-    ///
-    /// Subsequent recursive calls are made to insert the middle from the values 
-    /// before 30 and the values after 30.  If done correctly, the order
-    /// in which values are added (which results in a balanced bst) will be:
-    /// 
-    /// 30, 10, 20, 50, 40, 60
-    /// 
-    /// This function is intended to be called the first time by CreateTreeFromSortedList.
-    ///
-    /// The purpose for having the first and last parameters is so that we do 
-    /// not need to create new sub-lists when we make recursive calls.  Avoid 
-    /// using list slicing to create sub-lists to solve this problem.    
+    /// This function inserts the middle element of a given sorted range into the BST recursively.
     /// </summary>
-    /// <param name="sortedNumbers">input numbers that are already sorted</param>
-    /// <param name="first">the first index in the sortedNumbers to insert</param>
-    /// <param name="last">the last index in the sortedNumbers to insert</param>
-    /// <param name="bst">the BinarySearchTree in which to insert the values</param>
     private static void InsertMiddle(int[] sortedNumbers, int first, int last, BinarySearchTree bst)
     {
-        // TODO Start Problem 5
+        if (first > last)
+            return;
+
+        int mid = (first + last) / 2;
+        bst.Insert(sortedNumbers[mid]);
+
+        InsertMiddle(sortedNumbers, first, mid - 1, bst); // Insert left subarray
+        InsertMiddle(sortedNumbers, mid + 1, last, bst);  // Insert right subarray
+    }
+}
+
+// Example Usage
+class Program
+{
+    static void Main()
+    {
+        BinarySearchTree bst = new BinarySearchTree();
+
+        // Insert values
+        bst.Insert(50);
+        bst.Insert(30);
+        bst.Insert(70);
+        bst.Insert(20);
+        bst.Insert(40);
+        bst.Insert(60);
+        bst.Insert(80);
+        bst.Insert(70); // Duplicate, should not be inserted
+
+        Console.WriteLine("Contains 40: " + bst.Contains(40)); // True
+        Console.WriteLine("Contains 90: " + bst.Contains(90)); // False
+
+        Console.WriteLine("Tree Height: " + bst.GetHeight()); // Expected height
+
+        Console.WriteLine("Reversed Order Traversal:");
+        foreach (var value in bst.Reversed())
+        {
+            Console.WriteLine(value);
+        }
+
+        Console.WriteLine("Creating balanced BST from sorted list...");
+        int[] sortedNumbers = { 10, 20, 30, 40, 50, 60, 70 };
+        var balancedBst = Trees.CreateTreeFromSortedList(sortedNumbers);
+
+        Console.WriteLine("Balanced BST Traversal:");
+        foreach (var value in balancedBst.Reversed())
+        {
+            Console.WriteLine(value);
+        }
     }
 }
